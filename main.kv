@@ -1,0 +1,359 @@
+#: import Clock kivy.clock.Clock
+
+MainWindow:
+    orientation: "vertical"
+    spacing: "6dp"
+    padding: "8dp", "8dp"
+    MDBoxLayout:
+        orientation: "vertical"
+        size_hint: 1, 1
+        MDTabs:
+            id: tabs
+            tab_bar_height: "40dp"
+            tab_indicator_height: "2dp"
+            text_color_active: app.theme_cls.primary_dark
+            text_color_normal: app.theme_cls.primary_light
+            anim_duration: 0.1
+            indicator_color: app.theme_cls.primary_color
+            background_color: .6, .7, .9, 0
+            tab_hint_x: True
+            #on_tab_switch: app.on_tab_switch(*args)
+            Tab:
+                title: "Watchlist"
+                icon: "television"
+                BorderFrame:
+                    orientation: "vertical"
+                    size_hint: 1, 1
+                    ScrollView:
+                        do_scroll_y: True
+                        do_scroll_x: False
+                        size_hint: 1, 1
+                        bar_color: app.theme_cls.primary_color
+                        #bar_margin: "-4dp"
+                        MDList:
+                            id: actual_listview
+                            #size_hint: 1, None
+                            #height: "30dp"
+            Tab:
+                title: "Archive"
+                icon: "television-off"
+                BorderFrame:
+                    orientation: "vertical"
+                    size_hint: 1, 1
+                    ScrollView:
+                        do_scroll_y: True
+                        do_scroll_x: False
+                        size_hint: 1, 1
+                        bar_color: app.theme_cls.primary_color
+                        #bar_margin: "-4dp"
+                        MDList:
+                            id: archive_listview
+                            #size_hint: 1, None
+                            #height: "30dp"
+    BoxLayout:
+        orientation: "horizontal"
+        spacing: "6dp"
+        padding: "0dp", "8dp"
+        size_hint: 1, None
+        height: "44dp"
+        MDTextField:
+            id: top_search_bar
+            pos_hint: {'top': 1}
+            multiline: False
+            hint_text: 'Put rottentomatoes.com/.... link here'
+            size_hint: 1, None
+            height: "36dp"
+            font_size: 18
+        MDRectangleFlatIconButton:
+            text: "Import"
+            icon: "magnify"
+            pos_hint: {'top': 1}
+            font_size: 16
+            size_hint: None, None
+            width: "80dp"
+            height: "36dp"
+            on_release: app.on_button_click(top_search_bar)
+    BoxLayout:
+        orientation: "vertical"
+        spacing: "6dp"
+        padding: "0dp", "8dp"
+        size_hint: 1, None
+        height: "310dp"
+        BorderFrame:
+            ScrollView:
+                do_scroll_y: False
+                do_scroll_x: True
+                size_hint: 1, None
+                height: "30dp"
+                scroll_x: 0
+                bar_color: app.theme_cls.primary_color
+                bar_margin: "-4dp"
+                MDLabel:
+                    id: series_name_label
+                    padding: "4dp", "0dp"
+                    text: ""
+                    # text_size: None, self.height # без переноса просто обрезает текст
+                    # с кривым переносом текста text_size: self.size
+                    text_size: None, self.height
+                    font_size: 28
+                    bold: True
+                    halign: 'left'
+                    valign: 'top'
+                    size_hint: None, None
+                    adaptive_width: True
+                    height: self.texture_size[1]
+            MDSeparator:
+            BoxLayout:
+                orientation: "horizontal"
+                MDTextField:
+                    id: series_info_label
+                    readonly: True
+                    multiline: True
+                    mode: "line"
+                    hint_text: "Series/Movie Info:"
+                    active_line: False
+                    line_color_normal: 1, 1, 1, 0
+                    line_color_focus: 1, 1, 1, 0
+                    size_hint: 1, 1
+                    text_size: self.size
+                    font_size: 16
+                AsyncImage:
+                    id: series_preview_img
+                    color: ".8", ".8", ".9", ".0"
+                    source: 'imgs/placeholderWH.jpg'
+                    #source: ""
+                    pos_hint: {"center_y": .5}
+                    size: self.texture_size
+                    size_hint: None, 1
+                    width: "200dp"
+    MDSeparator:
+    MDRectangleFlatButton:
+        text: "Add to list"
+        size_hint: 1, None
+        height: "30dp"
+        on_press: app.on_add_to_list_button_click()
+    MDSeparator:
+    MDRectangleFlatButton:
+        text: "Switch theme test"
+        size_hint: 1, None
+        height: "30dp"
+        #on_press: app.on_add_to_list_button_click()
+
+
+<BorderFrame@MDBoxLayout>
+    #md_bg_color: .6, .7, .9, .1
+    radius: [2, 2, 2, 2]
+    line_color: app.theme_cls.primary_color
+    orientation: "vertical"
+    spacing: "8dp"
+    padding: "8dp", "8dp"
+
+<Dialog_TextField@MDTextField>
+    multiline: False
+    size_hint: 1, 1
+    on_focus: Clock.schedule_once(lambda dt: self.select_all()) if self.focus else None
+
+<LabelWithTooltip@MDLabel+MDTooltip>
+    shift_y: "50dp"
+<IconButtonWithTooltip@MDIconButton+MDTooltip>
+    shift_y: "48dp"
+
+<CustomListItem>:
+    id: list_item
+    text: 'Series name'
+    secondary_text: 'Season:'
+    tertiary_text: 'Episode:'
+    #on_release: app.show_list_item_dialog(list_item)
+    on_release: root.show_brief_info()
+
+    MyLeftWidget:
+        #pos_hint: {"center_y": .4}
+        #radius: 5, 5, 5, 5
+        #size_hint: None, None
+        #size: "54dp", "54dp"
+        #source: 'imgs/template.jpg'
+
+    MyContainer:
+        IconButtonWithTooltip:
+            id: dots_button
+            tooltip_text: 'Menu'
+            icon: 'dots-vertical'
+            on_release: root.menu_drop(list_item)
+
+
+<MenuHeader>
+    size_hint: None, None
+    height: "46dp"
+    width: "256dp"
+
+    MDBoxLayout:
+        size_hint: 1, 1
+        md_bg_color: app.theme_cls.primary_color
+        radius: 7, 7, 0, 0
+
+        MDIconButton:
+            user_font_size: "20sp"
+            icon: "gesture-tap-button"
+            pos_hint: {"center_y": .5}
+
+        LabelWithTooltip:
+            id: menu_header_label
+            text: root.header_name
+            theme_text_color: "ContrastParentBackground"
+            tooltip_text: '<tooltip>'
+            adaptive_size: True
+            text_size: None, self.height
+            pos_hint: {"center_y": .5}
+
+
+<ListDialogContent>
+    orientation: "vertical"
+    size_hint: 1, None
+    height: "500dp"
+
+    MDBoxLayout:
+        orientation: "horizontal"
+        size_hint: 1, None
+        height: "250dp"
+        spacing: "10dp"
+        MDBoxLayout:
+            orientation: "vertical"
+            size_hint: 1, None
+            adaptive_height: True
+            pos_hint: {"center_y": .5}
+            spacing: "4dp"
+            MDTextField:
+                id: name_text_field
+                required: True
+                text: root.name
+                max_text_length: 70
+                hint_text: 'Series/Movie name (Press "Enter" to change id)'
+                helper_text_mode: "on_error"
+                helper_text: "Name is required. Less than 70 letters"
+                on_text_validate: root.on_text_field_validate(self.text)
+
+            Dialog_TextField:
+                id: season_text_field
+                text: root.season
+                input_filter: 'int'
+                max_text_length: 5
+                hint_text: "Season number (if exist)"
+                helper_text_mode: "on_error"
+                helper_text: "Must contain only numbers (or 'Movie'). Less than 5 digits"
+
+            Dialog_TextField:
+                id: episode_text_field
+                text: root.episode
+                max_text_length: 70
+                input_filter: 'int'
+                hint_text: "Episode number (if exist)"
+                helper_text_mode: "on_error"
+                helper_text: "Must be less than 70 letters"
+            MDLabel:
+                text: "Is the series over ? (No <> Yes)"
+                font_size: 12
+                disabled: True
+            MDBoxLayout:
+                orientation: "horizontal"
+                spacing: "14dp"
+                size_hint: 1, None
+                adaptive_height: True
+                MDSwitch:
+                    id: series_state
+                    active: root.is_finished
+                    height: "34dp"
+                    width: "40dp"
+                    pos_hint: {"center_y": .4}
+            MDSeparator:
+
+        FitImage:
+            source: root.img_src
+            pos_hint: {"center_y": .58}
+            size_hint: .45, 1
+    MDBoxLayout:
+        orientation: "horizontal"
+        size_hint: 1, None
+        adaptive_height: True
+
+        MDLabel:
+            id: id_label_dialog
+            size_hint: .5, None
+            adaptive_height: True
+            halign: 'right'
+            text: "id: " + root.id
+            font_size: 14
+            theme_text_color: "ContrastParentBackground"
+
+    BorderFrame:
+        size_hint: 1, None
+        height: "185dp"
+        pos_hint: {"center_x": .5}
+        MDTextField:
+            id: comment_text_field
+            text: root.user_comment
+            size_hint: 1, 1
+            hint_text: "Your commentaries / notes:"
+            multiline: True
+            max_text_length: 400
+
+    BoxLayout:
+        orientation: 'horizontal'
+        spacing: "10dp"
+        MDRaisedButton:
+            text: "SAVE"
+            on_release: (root.update_info_from_dialog(root.obj), app.close_list_item_dialog())
+        MDRectangleFlatButton:
+            text: 'CANCEL'
+            on_release: app.close_list_item_dialog()
+
+<CustomSnackbar>
+    duration: 1
+    bg_color: .1, .1, .1, .5
+    snackbar_animation_dir: "Right"
+    size_hint_x: .3
+    height: "110dp"
+    MDBoxLayout:
+        orientation: "vertical"
+        spacing: "6dp"
+        size_hint: 1, 1
+        MDLabel:
+            text: root.name
+            shorten: True
+            font_size: 14
+            theme_text_color: "Custom"
+            text_color: 1, 1, 1, 1
+        MDLabel:
+            text: root.season
+            shorten: True
+            font_size: 14
+            theme_text_color: "Custom"
+            text_color: 1, 1, 1, 1
+        MDLabel:
+            text: root.episode
+            shorten: True
+            font_size: 14
+            theme_text_color: "Custom"
+            text_color: 1, 1, 1, 1
+        MDSeparator:
+            #color: app.theme_cls.primary_color
+            color: 1, 1, 1, 1
+        MDBoxLayout:
+            orientation: "horizontal"
+            padding: "0dp", "20dp", "0dp", "0dp"
+            spacing: "20dp"
+            MDTextButton:
+                #id: episode_text_button
+                text: "[u]+1 Episode[/u]"
+                markup: True
+                disabled: root.disable_plus_button
+                font_size: 14
+                theme_text_color: "Custom"
+                text_color: app.theme_cls.primary_color
+                on_release: root.add_from_snackbar()
+            MDTextButton:
+                text: "[u]Edit[/u]"
+                markup: True
+                font_size: 14
+                theme_text_color: "Custom"
+                text_color: app.theme_cls.primary_color
+                on_release: root.edit_from_snackbar()
