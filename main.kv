@@ -12,7 +12,7 @@ MainWindow:
             tab_bar_height: "40dp"
             tab_indicator_height: "2dp"
             text_color_active: app.theme_cls.primary_dark
-            text_color_normal: app.theme_cls.primary_light
+            # text_color_normal: app.theme_cls.primary_light
             anim_duration: 0.1
             indicator_color: app.theme_cls.primary_color
             background_color: .6, .7, .9, 0
@@ -164,7 +164,7 @@ MainWindow:
     secondary_text: 'Season:'
     tertiary_text: 'Episode:'
     #on_release: app.show_list_item_dialog(list_item)
-    on_release: root.show_brief_info()
+    on_release: root.brief_menu_drop(list_item)
 
     MyLeftWidget:
         #pos_hint: {"center_y": .4}
@@ -282,7 +282,8 @@ MainWindow:
             halign: 'right'
             text: "id: " + root.id
             font_size: 14
-            theme_text_color: "ContrastParentBackground"
+            # theme_text_color: "ContrastParentBackground"
+            theme_text_color: "Primary"
 
     BorderFrame:
         size_hint: 1, None
@@ -342,7 +343,6 @@ MainWindow:
             padding: "0dp", "20dp", "0dp", "0dp"
             spacing: "20dp"
             MDTextButton:
-                #id: episode_text_button
                 text: "[u]+1 Episode[/u]"
                 markup: True
                 disabled: root.disable_plus_button
@@ -357,3 +357,45 @@ MainWindow:
                 theme_text_color: "Custom"
                 text_color: app.theme_cls.primary_color
                 on_release: root.edit_from_snackbar()
+
+<DropDownMenuItem@OneLineListItem>
+    font_style: "Subtitle2"
+    theme_text_color: "Custom"
+    text_color: app.theme_cls.primary_color
+
+<BriefMenuContent@MDBoxLayout>
+    name: ''
+    disable_plus_button: False
+    # padding: "0dp", "0dp", "0dp", "0dp"
+    BorderFrame:
+        md_bg_color: app.theme_cls.bg_normal
+        orientation: "vertical"
+        spacing: "6dp"
+        size_hint: 1, .9
+        line_color: app.theme_cls.divider_color
+        MDLabel:
+            text: root.name[:20] + '...' if len(root.name) > 20 else root.name
+            halign: "center"
+            font_style: "Subtitle2"
+            theme_text_color: "Custom"
+            text_color: 1, 1, 1, 1
+        MDSeparator:
+        MDBoxLayout:
+            orientation: "horizontal"
+            padding: "25dp", "10dp", "25dp", "5dp"
+            spacing: "30dp"
+            MDTextButton:
+                text: "[u]+1 Episode[/u]"
+                markup: True
+                disabled: root.disable_plus_button
+                font_style: "Subtitle2"
+                theme_text_color: "Custom"
+                text_color: app.theme_cls.primary_color
+                on_release: root.caller_instance.add_one_episode()
+            MDTextButton:
+                text: "[u]Edit[/u]"
+                markup: True
+                font_style: "Subtitle2"
+                theme_text_color: "Custom"
+                text_color: app.theme_cls.primary_color
+                on_release: root.caller_instance.edit_item(root.caller_instance)

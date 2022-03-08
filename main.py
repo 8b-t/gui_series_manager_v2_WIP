@@ -102,7 +102,6 @@ class ListDialogContent(MDBoxLayout):
         self.season = item.secondary_text.lstrip('Season: ')
         self.episode = item.tertiary_text.lstrip('Episode: ')
         self.img_src = f'imgs/{item.list_item_id}.jpg'
-        self.is_finished = item.is_finished
         self.is_finished = True if item.is_finished == 1 else False
         self.user_comment = item.user_comment
 
@@ -126,7 +125,7 @@ class ListDialogContent(MDBoxLayout):
                 item.tertiary_text = '---'
             item.user_comment = self.ids.comment_text_field.text[:400]
             item.is_finished = 1 if self.ids.series_state.active else 0
-            item.bg_color = (.3, .8, .3, .1) if self.ids.series_state.active else (0, 0, 0, 0)
+            item.bg_color = (.3, .3, .3, .1) if self.ids.series_state.active else (0, 0, 0, 0)
             db.update_data(item.db_id, item.list_item_id, item.text, item.secondary_text,
                            item.tertiary_text, self.img_src, item.is_finished, item.user_comment)
             # db.show_db()
@@ -148,6 +147,7 @@ class MyLeftWidget(ImageLeftWidget):
 
 # Custom widget for list items
 class CustomListItem(ThreeLineAvatarIconListItem):
+
     def __init__(self, list_item_id=None, db_id=None, tab_number=0, is_finished=0, user_comment='', **kwargs):
         super().__init__(**kwargs)
         self.list_item_id = list_item_id
@@ -161,24 +161,33 @@ class CustomListItem(ThreeLineAvatarIconListItem):
             {
                 "text": "Edit",
                 # "icon": "pencil",
-                "viewclass": "OneLineListItem",
+                "viewclass": "DropDownMenuItem",
                 "height": dp(46),
-                "on_release": lambda list_item=self: self.edit_item(list_item)
+                "on_release": lambda list_item=self: self.edit_item(list_item),
             },
             {
                 "text": "Move to Archive tab",
                 # "icon": "folder-move",
-                "viewclass": "OneLineListItem",
+                "viewclass": "DropDownMenuItem",
                 "height": dp(46),
-                "on_release": lambda list_item=self: self.move_to_tab(list_item)
+                "on_release": lambda list_item=self: self.move_to_tab(list_item),
             },
             {
                 "text": "Delete",
                 # "icon": "delete",
-                "viewclass": "OneLineListItem",
+                "viewclass": "DropDownMenuItem", # OneLineListItem
                 "height": dp(46),
-                "on_release": lambda list_item=self: self.delete_item(list_item)
+                "on_release": lambda list_item=self: self.delete_item(list_item),
             },
+        ]
+        brief_menu_items = [
+            {
+                "name": self.text,
+                "viewclass": "BriefMenuContent",
+                "height": dp(90),
+                "caller_instance": None,
+                # "on_release": lambda list_item=self: self.add_one_episode(),
+            }
         ]
 
         self.menu = MDDropdownMenu(
@@ -187,6 +196,14 @@ class CustomListItem(ThreeLineAvatarIconListItem):
             items=menu_items,
             width_mult=4,
             opening_time=0,
+        )
+
+        self.brief_menu = MDDropdownMenu(
+            items=brief_menu_items,
+            background_color=[0, 0, 0, 0],
+            width_mult=3,
+            opening_time=.3,
+            position='center',
         )
 
     # opening list item side menu with header shortening
@@ -199,6 +216,15 @@ class CustomListItem(ThreeLineAvatarIconListItem):
             self.menu.header_cls.ids.menu_header_label.text = list_item.text
         self.menu.header_cls.ids.menu_header_label.tooltip_text = list_item.text
         self.menu.open()
+
+    def brief_menu_drop(self, list_item):
+        self.brief_menu.caller = list_item
+        self.brief_menu.items[0]['caller_instance'] = list_item
+        if list_item.is_finished or list_item.tertiary_text == '---':
+            self.brief_menu.items[0]['disable_plus_button'] = True
+        else:
+            self.brief_menu.items[0]['disable_plus_button'] = False
+        self.brief_menu.open()
 
     # Delete list item
     def delete_item(self, list_item):
@@ -213,6 +239,7 @@ class CustomListItem(ThreeLineAvatarIconListItem):
 
     # Calling edit list item from side menu
     def edit_item(self, list_item):
+        self.brief_menu.dismiss()
         MainApp.get_running_app().show_list_item_dialog(list_item)
         self.menu.dismiss()
         MainApp.snackbar_action(f'{list_item.text} edit')
@@ -248,6 +275,7 @@ class CustomListItem(ThreeLineAvatarIconListItem):
         snackbar.open()
 
     def add_one_episode(self):
+        self.brief_menu.dismiss()
         tmp = int(self.tertiary_text.lstrip('Episode: ')) + 1
         self.tertiary_text = f'Episode: {tmp}'
         db.plus_one_episode(self.db_id, self.tertiary_text)
@@ -260,7 +288,6 @@ class MainApp(MDApp):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.current_obj = None
-        db.show_db()
 
     def build(self):
         Window.top = 30
