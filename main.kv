@@ -2,142 +2,64 @@
 
 MainWindow:
     orientation: "vertical"
-    spacing: "6dp"
-    padding: "8dp", "8dp"
     MDBoxLayout:
         orientation: "vertical"
-        size_hint: 1, 1
-        MDTabs:
-            id: tabs
-            tab_bar_height: "40dp"
-            tab_indicator_height: "2dp"
-            text_color_active: app.theme_cls.primary_dark
-            # text_color_normal: app.theme_cls.primary_light
-            anim_duration: 0.1
-            indicator_color: app.theme_cls.primary_color
-            background_color: .6, .7, .9, 0
-            tab_hint_x: True
-            #on_tab_switch: app.on_tab_switch(*args)
-            Tab:
-                title: "Watchlist"
-                icon: "television"
-                BorderFrame:
-                    orientation: "vertical"
-                    size_hint: 1, 1
-                    ScrollView:
-                        do_scroll_y: True
-                        do_scroll_x: False
-                        size_hint: 1, 1
-                        bar_color: app.theme_cls.primary_color
-                        #bar_margin: "-4dp"
-                        MDList:
-                            id: actual_listview
-                            #size_hint: 1, None
-                            #height: "30dp"
-            Tab:
-                title: "Archive"
-                icon: "television-off"
-                BorderFrame:
-                    orientation: "vertical"
-                    size_hint: 1, 1
-                    ScrollView:
-                        do_scroll_y: True
-                        do_scroll_x: False
-                        size_hint: 1, 1
-                        bar_color: app.theme_cls.primary_color
-                        #bar_margin: "-4dp"
-                        MDList:
-                            id: archive_listview
-                            #size_hint: 1, None
-                            #height: "30dp"
-    BoxLayout:
-        orientation: "horizontal"
         spacing: "6dp"
-        padding: "0dp", "8dp"
+        padding: "8dp", "8dp"
+        MDBoxLayout:
+            orientation: "vertical"
+            size_hint: 1, 1
+            MDTabs:
+                id: tabs
+                tab_bar_height: "40dp"
+                tab_indicator_height: "4dp"
+                text_color_active: app.theme_cls.primary_dark
+                # text_color_normal: app.theme_cls.primary_light
+                anim_duration: 0.1
+                indicator_color: app.theme_cls.primary_color
+                background_color: .6, .7, .9, 0
+                tab_hint_x: True
+                #on_tab_switch: app.on_tab_switch(*args)
+                Tab:
+                    title: "Watchlist"
+                    icon: "television"
+                    BorderFrame:
+                        orientation: "vertical"
+                        size_hint: 1, 1
+                        ScrollView:
+                            do_scroll_y: True
+                            do_scroll_x: False
+                            size_hint: 1, 1
+                            bar_color: app.theme_cls.primary_color
+                            #bar_margin: "-4dp"
+                            MDList:
+                                id: actual_listview
+                                #size_hint: 1, None
+                                #height: "30dp"
+                Tab:
+                    title: "Archive"
+                    icon: "television-off"
+                    BorderFrame:
+                        orientation: "vertical"
+                        size_hint: 1, 1
+                        ScrollView:
+                            do_scroll_y: True
+                            do_scroll_x: False
+                            size_hint: 1, 1
+                            bar_color: app.theme_cls.primary_color
+                            #bar_margin: "-4dp"
+                            MDList:
+                                id: archive_listview
+                                #size_hint: 1, None
+                                #height: "30dp"
+
+    MDToolbar:
+        id: "toolbar_right"
+        md_bg_color: app.theme_cls.primary_dark
         size_hint: 1, None
-        height: "44dp"
-        MDTextField:
-            id: top_search_bar
-            pos_hint: {'top': 1}
-            multiline: False
-            hint_text: 'Put rottentomatoes.com/.... link here'
-            size_hint: 1, None
-            height: "36dp"
-            font_size: 18
-        MDRectangleFlatIconButton:
-            text: "Import"
-            icon: "magnify"
-            pos_hint: {'top': 1}
-            font_size: 16
-            size_hint: None, None
-            width: "80dp"
-            height: "36dp"
-            on_release: app.on_button_click(top_search_bar)
-    BoxLayout:
-        orientation: "vertical"
-        spacing: "6dp"
-        padding: "0dp", "8dp"
-        size_hint: 1, None
-        height: "310dp"
-        BorderFrame:
-            ScrollView:
-                do_scroll_y: False
-                do_scroll_x: True
-                size_hint: 1, None
-                height: "30dp"
-                scroll_x: 0
-                bar_color: app.theme_cls.primary_color
-                bar_margin: "-4dp"
-                MDLabel:
-                    id: series_name_label
-                    padding: "4dp", "0dp"
-                    text: ""
-                    # text_size: None, self.height # без переноса просто обрезает текст
-                    # с кривым переносом текста text_size: self.size
-                    text_size: None, self.height
-                    font_size: 28
-                    bold: True
-                    halign: 'left'
-                    valign: 'top'
-                    size_hint: None, None
-                    adaptive_width: True
-                    height: self.texture_size[1]
-            MDSeparator:
-            BoxLayout:
-                orientation: "horizontal"
-                MDTextField:
-                    id: series_info_label
-                    readonly: True
-                    multiline: True
-                    mode: "line"
-                    hint_text: "Series/Movie Info:"
-                    active_line: False
-                    line_color_normal: 1, 1, 1, 0
-                    line_color_focus: 1, 1, 1, 0
-                    size_hint: 1, 1
-                    text_size: self.size
-                    font_size: 16
-                AsyncImage:
-                    id: series_preview_img
-                    color: ".8", ".8", ".9", ".0"
-                    source: 'imgs/placeholderWH.jpg'
-                    #source: ""
-                    pos_hint: {"center_y": .5}
-                    size: self.texture_size
-                    size_hint: None, 1
-                    width: "200dp"
-    MDSeparator:
-    MDRectangleFlatButton:
-        text: "Add to list"
-        size_hint: 1, None
-        height: "30dp"
-        on_press: app.on_add_to_list_button_click()
-    MDSeparator:
-    MDRectangleFlatButton:
-        text: "Switch theme test"
-        size_hint: 1, None
-        height: "30dp"
-        #on_press: app.on_add_to_list_button_click()
+        height: "36dp"
+        left_action_items: [["menu", lambda x: x]]
+        right_action_items: [["playlist-plus", lambda x: app.toolbar_right_menu_drop(x)]]
 
 
 <BorderFrame@MDBoxLayout>
@@ -163,7 +85,6 @@ MainWindow:
     text: 'Series name'
     secondary_text: 'Season:'
     tertiary_text: 'Episode:'
-    #on_release: app.show_list_item_dialog(list_item)
     on_release: root.brief_menu_drop(list_item)
 
     MyLeftWidget:
@@ -205,6 +126,93 @@ MainWindow:
             text_size: None, self.height
             pos_hint: {"center_y": .5}
 
+<ImportDialogContent>
+    orientation: "vertical"
+    size_hint: 1, None
+    height: "480dp"
+    spacing: "4dp"
+    BoxLayout:
+        orientation: "horizontal"
+        spacing: "6dp"
+        padding: "0dp", "8dp", "0dp", "0dp"
+        size_hint: 1, None
+        height: "44dp"
+        MDTextField:
+            id: top_search_bar
+            pos_hint: {'top': 1}
+            multiline: False
+            hint_text: 'Put rottentomatoes.com/.... link here'
+            height: "40dp"
+            font_size: 16
+        MDRectangleFlatIconButton:
+            text: "Import"
+            icon: "magnify"
+            pos_hint: {'top': 1}
+            on_release: root.on_button_click(top_search_bar)
+    BoxLayout:
+        orientation: "vertical"
+        spacing: "6dp"
+        padding: "0dp", "8dp"
+        size_hint: 1, None
+        height: "440dp"
+        BorderFrame:
+            line_color: app.theme_cls.divider_color
+            ScrollView:
+                do_scroll_y: False
+                do_scroll_x: True
+                size_hint: 1, None
+                height: "30dp"
+                scroll_x: 0
+                bar_color: app.theme_cls.primary_color
+                bar_margin: "-4dp"
+                MDLabel:
+                    id: series_name_label
+                    padding: "4dp", "0dp"
+                    text: ""
+                    # text_size: None, self.height # без переноса просто обрезает текст
+                    # с кривым переносом текста text_size: self.size
+                    text_size: None, self.height
+                    font_size: 28
+                    bold: True
+                    halign: 'left'
+                    valign: 'top'
+                    size_hint: None, None
+                    adaptive_width: True
+                    height: self.texture_size[1]
+            BoxLayout:
+                orientation: "horizontal"
+                MDTextField:
+                    id: series_info_label
+                    readonly: True
+                    multiline: True
+                    mode: "line"
+                    hint_text: ""
+                    text: ""
+                    active_line: False
+                    line_color_normal: 1,1,1,0
+                    size_hint: 1, 1
+                    text_size: self.size
+                    font_size: 16
+                AsyncImage:
+                    id: series_preview_img
+                    color: ".8", ".8", ".9", ".0"
+                    source: 'imgs/placeholderWH.jpg'
+                    pos_hint: {"center_y": .5}
+                    size: self.texture_size
+                    size_hint: None, 1
+                    width: "200dp"
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: 1, None
+            height: "36dp"
+            spacing: "10dp"
+            padding: "0dp", "8dp", "0dp", "0dp"
+            MDRaisedButton:
+                text: "Add to List"
+                on_release: (root.on_add_to_list_button_click(), app.close_list_item_dialog())
+            MDRectangleFlatButton:
+                text: 'Cancel'
+                on_release: app.close_list_item_dialog()
 
 <ListDialogContent>
     orientation: "vertical"
@@ -307,56 +315,6 @@ MainWindow:
             text: 'CANCEL'
             on_release: app.close_list_item_dialog()
 
-<CustomSnackbar>
-    duration: 1
-    bg_color: .1, .1, .1, .5
-    snackbar_animation_dir: "Right"
-    size_hint_x: .3
-    height: "110dp"
-    MDBoxLayout:
-        orientation: "vertical"
-        spacing: "6dp"
-        size_hint: 1, 1
-        MDLabel:
-            text: root.name
-            shorten: True
-            font_size: 14
-            theme_text_color: "Custom"
-            text_color: 1, 1, 1, 1
-        MDLabel:
-            text: root.season
-            shorten: True
-            font_size: 14
-            theme_text_color: "Custom"
-            text_color: 1, 1, 1, 1
-        MDLabel:
-            text: root.episode
-            shorten: True
-            font_size: 14
-            theme_text_color: "Custom"
-            text_color: 1, 1, 1, 1
-        MDSeparator:
-            #color: app.theme_cls.primary_color
-            color: 1, 1, 1, 1
-        MDBoxLayout:
-            orientation: "horizontal"
-            padding: "0dp", "20dp", "0dp", "0dp"
-            spacing: "20dp"
-            MDTextButton:
-                text: "[u]+1 Episode[/u]"
-                markup: True
-                disabled: root.disable_plus_button
-                font_size: 14
-                theme_text_color: "Custom"
-                text_color: app.theme_cls.primary_color
-                on_release: root.add_from_snackbar()
-            MDTextButton:
-                text: "[u]Edit[/u]"
-                markup: True
-                font_size: 14
-                theme_text_color: "Custom"
-                text_color: app.theme_cls.primary_color
-                on_release: root.edit_from_snackbar()
 
 <DropDownMenuItem@OneLineListItem>
     font_style: "Subtitle2"
@@ -378,7 +336,7 @@ MainWindow:
             halign: "center"
             font_style: "Subtitle2"
             theme_text_color: "Custom"
-            text_color: 1, 1, 1, 1
+            text_color: app.theme_cls.opposite_bg_normal
         MDSeparator:
         MDBoxLayout:
             orientation: "horizontal"

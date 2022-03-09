@@ -2,7 +2,6 @@ from kivy.config import Config
 from kivy.core.window import Window
 from kivy.properties import ObjectProperty, StringProperty, BooleanProperty
 from kivy.uix.boxlayout import BoxLayout
-from kivy.utils import rgba
 from kivymd.app import MDApp
 from kivy.metrics import dp
 from kivymd.uix.boxlayout import MDBoxLayout
@@ -10,7 +9,7 @@ from kivymd.uix.dialog import MDDialog
 from kivymd.uix.floatlayout import MDFloatLayout
 from kivymd.uix.list import ImageLeftWidget, IRightBodyTouch, ThreeLineAvatarIconListItem
 from kivymd.uix.menu import MDDropdownMenu
-from kivymd.uix.snackbar import Snackbar, BaseSnackbar
+from kivymd.uix.snackbar import Snackbar
 import re
 import os
 import urllib.request
@@ -51,28 +50,6 @@ class MyContainer(IRightBodyTouch, MDBoxLayout):
     pass
 
 
-class CustomSnackbar(BaseSnackbar):
-    name = StringProperty(None)
-    season = StringProperty(None)
-    episode = StringProperty(None)
-    list_item = ObjectProperty(None)
-    disable_plus_button = BooleanProperty(False)
-
-    def __init__(self, instance, **kwargs):
-        super().__init__(**kwargs)
-        self.list_item = instance
-        if self.episode == '---' or self.list_item.is_finished:
-            self.disable_plus_button = True
-
-    def edit_from_snackbar(self):
-        self.list_item.edit_item(self.list_item)
-        self.dismiss()
-
-    def add_from_snackbar(self):
-        self.list_item.add_one_episode()
-        self.dismiss()
-
-
 # list item dot menu header
 class MenuHeader(MDBoxLayout):
     header_name = StringProperty()
@@ -80,6 +57,54 @@ class MenuHeader(MDBoxLayout):
     def __init__(self, header_name='', **kwargs):
         super().__init__(**kwargs)
         self.header_name = header_name
+
+
+class ImportDialogContent(MDBoxLayout):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.current_obj = None
+
+    # Top panels "Search/Import" button event
+    def on_button_click(self, widget):
+        if widget.text:
+            try:
+                self.current_obj = MyParser(widget.text)
+                self.ids.series_name_label.text = self.current_obj.get_main_title()
+                self.ids.series_info_label.text = self.current_obj.get_series_info()
+                self.ids.series_info_label.hint_text = "Series/Movie Info:"
+                self.ids.series_preview_img.source = self.current_obj.get_preview_img()
+                self.ids.series_preview_img.color = "1", "1", "1", "1"
+                widget.text = ''
+                MainApp.snackbar_action(f'Info about {self.current_obj.get_main_title()} uploaded')
+            except Exception as err:
+                print(err)
+                MainApp.snackbar_action(f"[color=#ff5555]Import Failed![/color] {err}", 5)
+
+    # Middle panels "add to list" button event
+    def on_add_to_list_button_click(self):
+        c_obj = self.current_obj
+        if c_obj:
+            try:
+                # converting name of series/movie to acceptable name
+                snakecase_name = MainApp.name_to_id_convert(c_obj.get_main_title())
+                # preview image save TODO: db_id + get_id in name of file
+                image_save(c_obj.get_preview_img(), snakecase_name)
+                img_src = f'imgs/{snakecase_name}.jpg'
+                if c_obj.is_this_tv_show():
+                    season = 'Season: 1'
+                    episode = 'Episode: 1'
+                else:
+                    season = 'Movie'
+                    episode = '---'
+                db.add_data(snakecase_name, c_obj.get_main_title(), season, episode, img_src, 0, 0)
+                MainApp.get_running_app().create_list_item(db.cursor.lastrowid, snakecase_name, c_obj.get_main_title(),
+                                      season, episode, img_src, 0, 0)
+
+                db.show_db()  # temporary DELETE ME LATER
+                self.current_obj = None  # temporary to prevent second click
+                MainApp.snackbar_action(f'{c_obj.get_main_title()} added to Watchlist tab !')
+            except Exception as err:
+                print(str(err))
 
 
 # Dialog window
@@ -175,7 +200,7 @@ class CustomListItem(ThreeLineAvatarIconListItem):
             {
                 "text": "Delete",
                 # "icon": "delete",
-                "viewclass": "DropDownMenuItem", # OneLineListItem
+                "viewclass": "DropDownMenuItem",
                 "height": dp(46),
                 "on_release": lambda list_item=self: self.delete_item(list_item),
             },
@@ -262,23 +287,13 @@ class CustomListItem(ThreeLineAvatarIconListItem):
         self.parent.remove_widget(list_item)
         self.menu.dismiss()
 
-    def show_brief_info(self):
-        snackbar = CustomSnackbar(
-            self,
-            name=self.text,
-            season=self.secondary_text,
-            episode=self.tertiary_text,
-        )
-        snackbar.snackbar_x = Window.mouse_pos[0] if Window.mouse_pos[0] < Window.width - (Window.width / 3) \
-            else Window.width - (Window.width / 3)
-        snackbar.snackbar_y = Window.mouse_pos[1]-20
-        snackbar.open()
 
     def add_one_episode(self):
         self.brief_menu.dismiss()
         tmp = int(self.tertiary_text.lstrip('Episode: ')) + 1
         self.tertiary_text = f'Episode: {tmp}'
         db.plus_one_episode(self.db_id, self.tertiary_text)
+        MainApp.snackbar_action(f'+1 episode added to {self.text}')
 
 
 class MainApp(MDApp):
@@ -287,41 +302,50 @@ class MainApp(MDApp):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.current_obj = None
+
+
 
     def build(self):
         Window.top = 30
         Window.left = 200
-        self.theme_cls.primary_palette = 'Amber'  # 'BlueGray'
+        self.theme_cls.primary_palette = 'BlueGray'  # 'BlueGray'
         # Palette's:
         # ['Red', 'Pink', 'Purple', 'DeepPurple', 'Indigo', 'Blue', 'LightBlue', 'Cyan', 'Teal', 'Green',
         # 'LightGreen', 'Lime', 'Yellow', 'Amber', 'Orange', 'DeepOrange', 'Brown', 'Gray', 'BlueGray']
         self.theme_cls.theme_style = 'Dark'
-        #self.theme_cls.primary_hue = "500"
+        # self.theme_cls.primary_hue = "500"
+        self.toolbar_menu_items = [
+            {
+                "text": "Manual Addition",
+                "viewclass": "DropDownMenuItem",
+                "height": dp(42),
+                "on_release": lambda: (MainApp.snackbar_action('Not available at this moment. Work in progress', 5),
+                                       self.toolbar_right_menu.dismiss())
+            },
+            {
+                "text": "Import",
+                "viewclass": "DropDownMenuItem",
+                "height": dp(46),
+                "on_release": lambda: (self.show_import_dialog(), self.toolbar_right_menu.dismiss()),
+            },
+        ]
+        self.toolbar_right_menu = MDDropdownMenu(
+            items=self.toolbar_menu_items,
+            background_color=[.1, .1, .1, .9],
+            width_mult=4,
+            opening_time=.3,
+            position='auto',
+        )
 
     # Load all data from db to CustomList
     def on_start(self):
         data = db.get_data()
         for row in data:
             self.create_list_item(row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8])
-        #print(self.root.ids.tabs.get_current_tab()) #TODO Make first tab active on start
+        # print(self.root.ids.tabs.get_current_tab()) #TODO Make first tab active on start
 
     # def on_tab_switch(self, instance_tabs, instance_tab, instance_tab_label, tab_text):
     #     pass
-
-    # Top panels "Search/Import" button event
-    def on_button_click(self, widget):
-        if widget.text:
-            try:
-                self.current_obj = MyParser(widget.text)
-                self.root.ids.series_name_label.text = self.current_obj.get_main_title()
-                self.root.ids.series_info_label.text = self.current_obj.get_series_info()
-                self.root.ids.series_preview_img.source = self.current_obj.get_preview_img()
-                self.root.ids.series_preview_img.color = "1", "1", "1", "1"
-                widget.text = ''
-                MainApp.snackbar_action(f'Info about {self.current_obj.get_main_title()} uploaded')
-            except Exception as err:
-                MainApp.snackbar_action(f"[color=#ff5555]Import Failed![/color] {err}", 5)
 
     def create_list_item(self, db_id: int, name_id, name, season, episode,
                          img_source, tab: int, is_finished: int, user_comment=''):
@@ -360,32 +384,6 @@ class MainApp(MDApp):
         except Exception as err:
             MainApp.snackbar_action(f"[color=#ff5555]{str(err)}[/color]", 5)
 
-    # Middle panels "add to list" button event
-    def on_add_to_list_button_click(self):
-        c_obj = self.current_obj
-        if c_obj:
-            try:
-                # converting name of series/movie to acceptable name
-                snakecase_name = MainApp.name_to_id_convert(c_obj.get_main_title())
-                # preview image save TODO: db_id + get_id in name of file
-                image_save(c_obj.get_preview_img(), snakecase_name)
-                img_src = f'imgs/{snakecase_name}.jpg'
-                if c_obj.is_this_tv_show():
-                    season = 'Season: 1'
-                    episode = 'Episode: 1'
-                else:
-                    season = 'Movie'
-                    episode = '---'
-                db.add_data(snakecase_name, c_obj.get_main_title(), season, episode, img_src, 0, 0)
-                self.create_list_item(db.cursor.lastrowid, snakecase_name, c_obj.get_main_title(),
-                                      season, episode, img_src, 0, 0)
-
-                db.show_db()  # temporary DELETE ME LATER
-                self.current_obj = None  # temporary to prevent second click
-                MainApp.snackbar_action(f'{c_obj.get_main_title()} added to Watchlist tab !')
-            except Exception as err:
-                print(str(err))
-
     def show_list_item_dialog(self, list_item):
         if not self.list_item_dialog:
             self.list_item_dialog = MDDialog(
@@ -396,9 +394,23 @@ class MainApp(MDApp):
             )
         self.list_item_dialog.open()
 
+    def show_import_dialog(self):
+        if not self.list_item_dialog:
+            self.list_item_dialog = MDDialog(
+                title=f'Import series or movie',
+                type='custom',
+                content_cls=ImportDialogContent(),
+                auto_dismiss=False,
+            )
+        self.list_item_dialog.open()
+
     def close_list_item_dialog(self):
         self.list_item_dialog.dismiss()
         self.list_item_dialog = None
+
+    def toolbar_right_menu_drop(self, instance):
+        self.toolbar_right_menu.caller = instance
+        self.toolbar_right_menu.open()
 
     # Something like: "Terminator 2: Judgement Day" to "terminator_2_judgement_day"
     @staticmethod
@@ -416,11 +428,15 @@ class MainApp(MDApp):
     # show info on snackbar
     @staticmethod
     def snackbar_action(txt, arg_duration=1):
-        Snackbar(text=txt,
-                 bg_color=rgba(.6, .7, .9, .3),
-                 duration=arg_duration,
-                 font_size='16sp',
-                 ).open()
+        snackbar = Snackbar(text=txt,
+                            bg_color=[0, 0, 0, .3],
+                            duration=arg_duration,
+                            font_size='16sp',
+                            snackbar_x="8dp",
+                            snackbar_y="4dp",
+                            )
+        snackbar.size_hint_x = (Window.width - (snackbar.snackbar_x * 2)) / Window.width
+        snackbar.open()
 
 
 if __name__ == '__main__':
