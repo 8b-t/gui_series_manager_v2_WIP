@@ -20,8 +20,8 @@ from database import Database
 
 from myparser_package.myparser import MyParser
 
-Config.set('graphics', 'width', '700')
-Config.set('graphics', 'height', '950')
+Config.set('graphics', 'width', '800')
+Config.set('graphics', 'height', '1000')
 Config.set('graphics', 'minimum_width', '600')
 Config.set('graphics', 'minimum_height', '600')
 Config.set('graphics', 'resizable', 0)
@@ -308,11 +308,13 @@ class MainApp(MDApp):
     def build(self):
         Window.top = 30
         Window.left = 200
-        self.theme_cls.primary_palette = 'BlueGray'  # 'BlueGray'
+        self.theme_cls.primary_palette = 'Cyan'
         # Palette's:
         # ['Red', 'Pink', 'Purple', 'DeepPurple', 'Indigo', 'Blue', 'LightBlue', 'Cyan', 'Teal', 'Green',
         # 'LightGreen', 'Lime', 'Yellow', 'Amber', 'Orange', 'DeepOrange', 'Brown', 'Gray', 'BlueGray']
         self.theme_cls.theme_style = 'Dark'
+        # Style's :
+        # 'Light' or 'Dark'
         # self.theme_cls.primary_hue = "500"
         self.toolbar_menu_items = [
             {
