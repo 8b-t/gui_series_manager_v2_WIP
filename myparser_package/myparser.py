@@ -38,9 +38,11 @@ class MyParser:
         result = 'imgs/placeholder.jpg'
         if not self.is_that_tv_series:
             preview = self.soup.find('div', class_='movie-thumbnail-wrap')
-            result = preview.find('img').get('data-src')
+            if preview:
+                result = preview.find('img').get('src')
         elif self.is_that_tv_series:
             preview = self.soup.find('div', class_='tv-series__image-container')
-            result = preview.find('img').get('data-src')
+            if preview:
+                result = preview.find('img').get('src')
         return result
 
