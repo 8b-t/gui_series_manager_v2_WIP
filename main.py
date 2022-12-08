@@ -59,50 +59,65 @@ class MenuHeader(MDBoxLayout):
         self.header_name = header_name
 
 
-class ImportDialogContent(MDBoxLayout):
+class LinkImportDialogContent(MDBoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.current_obj = None
 
-    # Top panels "Search/Import" button event
+    #"Import" button event
     def on_button_click(self, widget):
         if widget.text:
             try:
                 self.current_obj = MyParser(widget.text)
-                self.ids.series_name_label.text = self.current_obj.get_main_title()
-                self.ids.series_info_label.text = self.current_obj.get_series_info()
-                self.ids.series_info_label.hint_text = "Series/Movie Info:"
-                self.ids.series_preview_img.source = self.current_obj.get_preview_img()
-                self.ids.series_preview_img.color = "1", "1", "1", "1"
-                widget.text = ''
+                MainApp.data_storage = self.current_obj
                 MainApp.snackbar_action(f'Info about {self.current_obj.get_main_title()} uploaded')
             except Exception as err:
                 print(err)
                 MainApp.snackbar_action(f"[color=#ff5555]Import Failed![/color] {err}", 5)
 
-    # Middle panels "add to list" button event
+
+class ImportDialogContent(MDBoxLayout):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.data = MainApp.data_storage
+        self.on_start_import_d_c()
+
+    def on_start_import_d_c(self):
+        if self.data:
+            try:
+                self.ids.series_name_label.text = self.data.get_main_title()
+                self.ids.series_info_label.text = self.data.get_series_info()
+                self.ids.series_info_label.hint_text = "Series/Movie Info:"
+                self.ids.series_preview_img.source = self.data.get_preview_img()
+                self.ids.series_preview_img.color = "1", "1", "1", "1"
+                MainApp.snackbar_action(f'Info about {self.data.get_main_title()} uploaded')
+            except Exception as err:
+                print(err)
+                MainApp.snackbar_action(f"[color=#ff5555]Import Failed![/color] {err}", 5)
+
+    # "add to list" button event
     def on_add_to_list_button_click(self):
-        c_obj = self.current_obj
-        if c_obj:
+        if self.data:
             try:
                 # converting name of series/movie to acceptable name
-                snakecase_name = MainApp.name_to_id_convert(c_obj.get_main_title())
+                snakecase_name = MainApp.name_to_id_convert(self.data.get_main_title())
                 # preview image save TODO: db_id + get_id in name of file
-                image_save(c_obj.get_preview_img(), snakecase_name)
+                image_save(self.data.get_preview_img(), snakecase_name)
                 img_src = f'imgs/{snakecase_name}.jpg'
-                if c_obj.is_this_tv_show():
+                if self.data.is_this_tv_show():
                     season = 'Season: 1'
                     episode = 'Episode: 1'
                 else:
                     season = 'Movie'
                     episode = '---'
-                db.add_data(snakecase_name, c_obj.get_main_title(), season, episode, img_src, 0, 0)
-                MainApp.get_running_app().create_list_item(db.cursor.lastrowid, snakecase_name, c_obj.get_main_title(),
+                db.add_data(snakecase_name, self.data.get_main_title(), season, episode, img_src, 0, 0)
+                MainApp.get_running_app().create_list_item(db.cursor.lastrowid, snakecase_name, self.data.get_main_title(),
                                       season, episode, img_src, 0, 0)
 
-                db.show_db()  # temporary DELETE ME LATER
-                self.current_obj = None  # temporary to prevent second click
-                MainApp.snackbar_action(f'{c_obj.get_main_title()} added to Watchlist tab !')
+                # db.show_db()  # temporary DELETE ME LATER
+                # self.current_obj = None  # temporary to prevent second click
+                MainApp.clear_storage()
+                MainApp.snackbar_action(f'{self.data.get_main_title()} added to Watchlist tab !')
             except Exception as err:
                 print(str(err))
 
@@ -172,6 +187,7 @@ class MyLeftWidget(ImageLeftWidget):
 
 # Custom widget for list items
 class CustomListItem(ThreeLineAvatarIconListItem):
+    brief_menu_active = BooleanProperty(False)
 
     def __init__(self, list_item_id=None, db_id=None, tab_number=0, is_finished=0, user_comment='', **kwargs):
         super().__init__(**kwargs)
@@ -211,7 +227,6 @@ class CustomListItem(ThreeLineAvatarIconListItem):
                 "viewclass": "BriefMenuContent",
                 "height": dp(90),
                 "caller_instance": None,
-                # "on_release": lambda list_item=self: self.add_one_episode(),
             }
         ]
 
@@ -227,7 +242,7 @@ class CustomListItem(ThreeLineAvatarIconListItem):
             items=brief_menu_items,
             background_color=[0, 0, 0, 0],
             width_mult=3,
-            opening_time=.3,
+            opening_time=0,
             position='center',
         )
 
@@ -299,6 +314,7 @@ class CustomListItem(ThreeLineAvatarIconListItem):
 class MainApp(MDApp):
     # for checking if no active dialog window atm
     list_item_dialog = None
+    data_storage = None
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -328,7 +344,7 @@ class MainApp(MDApp):
                 "text": "Import",
                 "viewclass": "DropDownMenuItem",
                 "height": dp(46),
-                "on_release": lambda: (self.show_import_dialog(), self.toolbar_right_menu.dismiss()),
+                "on_release": lambda: (self.show_link_import_dialog(), self.toolbar_right_menu.dismiss()),
             },
         ]
         self.toolbar_right_menu = MDDropdownMenu(
@@ -396,10 +412,20 @@ class MainApp(MDApp):
             )
         self.list_item_dialog.open()
 
-    def show_import_dialog(self):
+    def show_link_import_dialog(self):
         if not self.list_item_dialog:
             self.list_item_dialog = MDDialog(
                 title=f'Import series or movie',
+                type='custom',
+                content_cls=LinkImportDialogContent(),
+                auto_dismiss=False,
+            )
+        self.list_item_dialog.open()
+
+    def show_import_dialog(self):
+        if not self.list_item_dialog:
+            self.list_item_dialog = MDDialog(
+                #title=f'{MainApp.data_storage.get_main_title()}',
                 type='custom',
                 content_cls=ImportDialogContent(),
                 auto_dismiss=False,
@@ -413,6 +439,10 @@ class MainApp(MDApp):
     def toolbar_right_menu_drop(self, instance):
         self.toolbar_right_menu.caller = instance
         self.toolbar_right_menu.open()
+
+    @staticmethod
+    def clear_storage():
+        MainApp.data_storage = None
 
     # Something like: "Terminator 2: Judgement Day" to "terminator_2_judgement_day"
     @staticmethod

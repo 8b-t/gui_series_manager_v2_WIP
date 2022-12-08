@@ -85,7 +85,9 @@ MainWindow:
     text: 'Series name'
     secondary_text: 'Season:'
     tertiary_text: 'Episode:'
-    on_release: root.brief_menu_drop(list_item)
+    on_release:
+        if not root.brief_menu_active: root.brief_menu_drop(list_item); root.brief_menu_active = True
+        else: root.brief_menu.dismiss(); root.brief_menu_active = False; root.brief_menu_drop(list_item)
 
     MyLeftWidget:
         #pos_hint: {"center_y": .4}
@@ -126,29 +128,43 @@ MainWindow:
             text_size: None, self.height
             pos_hint: {"center_y": .5}
 
-<ImportDialogContent>
+<LinkImportDialogContent>
     orientation: "vertical"
     size_hint: 1, None
-    height: "480dp"
+    height: "90dp"
     spacing: "4dp"
     BoxLayout:
         orientation: "horizontal"
-        spacing: "6dp"
-        padding: "0dp", "8dp", "0dp", "0dp"
+        #spacing: "6dp"
+        padding: "12dp", "0dp", "0dp", "12dp"
         size_hint: 1, None
-        height: "44dp"
+        height: "20dp"
         MDTextField:
             id: top_search_bar
-            pos_hint: {'top': 1}
+            mode: "rectangle"
             multiline: False
             hint_text: 'Put rottentomatoes.com/.... link here'
-            height: "40dp"
+            height: "30dp"
             font_size: 16
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint: 1, None
+        height: "36dp"
+        spacing: "10dp"
+        padding: "0dp", "18dp", "0dp", "0dp"
         MDRectangleFlatIconButton:
             text: "Import"
             icon: "magnify"
-            pos_hint: {'top': 1}
-            on_release: root.on_button_click(top_search_bar)
+            on_release: (root.on_button_click(top_search_bar), app.close_list_item_dialog(), app.show_import_dialog())
+        MDRectangleFlatButton:
+            text: 'Cancel'
+            on_release: app.close_list_item_dialog()
+
+<ImportDialogContent>
+    orientation: "vertical"
+    size_hint: 1, None
+    height: "400dp"
+    spacing: "4dp"
     BoxLayout:
         orientation: "vertical"
         spacing: "6dp"
@@ -179,6 +195,7 @@ MainWindow:
                     size_hint: None, None
                     adaptive_width: True
                     height: self.texture_size[1]
+            MDSeparator:
             BoxLayout:
                 orientation: "horizontal"
                 MDTextField:
@@ -206,13 +223,13 @@ MainWindow:
             size_hint: 1, None
             height: "36dp"
             spacing: "10dp"
-            padding: "0dp", "8dp", "0dp", "0dp"
+            padding: "0dp", "18dp", "0dp", "0dp"
             MDRaisedButton:
                 text: "Add to List"
                 on_release: (root.on_add_to_list_button_click(), app.close_list_item_dialog())
             MDRectangleFlatButton:
                 text: 'Cancel'
-                on_release: app.close_list_item_dialog()
+                on_release: (app.close_list_item_dialog(), app.clear_storage())
 
 <ListDialogContent>
     orientation: "vertical"
