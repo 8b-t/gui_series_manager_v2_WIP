@@ -17,10 +17,8 @@ class MyParser:
         return url
 
     def get_main_title(self):
-        main_title = self.soup.find('h1', class_='mop-ratings-wrap__title mop-ratings-wrap__title--top')
-        if not main_title:
-            main_title = self.soup.find('h1', class_='scoreboard__title')
-        return main_title.text.strip()
+        main_title = self.soup.find('section', id='topSection').find('h1', class_='title')
+        return main_title.text.strip()[:70]
 
     def is_this_tv_show(self):
         """ Return True > series. False > Movie """
@@ -31,17 +29,20 @@ class MyParser:
         return True
 
     def get_series_info(self):
-        series_info = self.soup.find('div', id='movieSynopsis')
+        if not self.is_that_tv_series:
+            series_info = self.soup.find('section', id='movie-info').find('p')
+            return series_info.text.strip()
+        series_info = self.soup.find('section', id='series-info').find('p')
         return series_info.text.strip()
 
     def get_preview_img(self):
         result = 'imgs/placeholder.jpg'
         if not self.is_that_tv_series:
-            preview = self.soup.find('div', class_='movie-thumbnail-wrap')
+            preview = self.soup.find('tile-dynamic', class_='thumbnail')
             if preview:
                 result = preview.find('img').get('src')
         elif self.is_that_tv_series:
-            preview = self.soup.find('div', class_='tv-series__image-container')
+            preview = self.soup.find('tile-dynamic', class_='thumbnail')
             if preview:
                 result = preview.find('img').get('src')
         return result
